@@ -1,0 +1,33 @@
+name: Update HTML from Power Automate
+
+# Sự kiện kích hoạt: Khi nhận được tín hiệu 'repository_dispatch'
+on:
+  repository_dispatch:
+    types: [update_html_trigger] # Đây là "mật khẩu" sự kiện ta sẽ điền ở Power Automate
+
+jobs:
+  update-file:
+    runs-on: ubuntu-latest
+    steps:
+      # Bước 1: Lấy code về máy ảo
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Bước 2: Nhận nội dung Base64 và giải mã ra file index.html
+      - name: Update index.html
+        run: |
+          echo "${{ github.event.client_payload.html_content_base64 }}" | base64 -d > index.html
+
+      # Bước 3: Cấu hình Git và đẩy code lên (Commit & Push)
+      - name: Commit and Push
+        run: |
+          git config --global user.name "PowerAutomateBot"
+          git config --global user.email "bot@nous.vn"
+          # Kiểm tra xem có gì thay đổi không
+          if [[ -n $(git status -s) ]]; then
+            git add index.html
+            git commit -m "Auto update from Power Automate"
+            git push
+          else
+            echo "No changes to commit"
+          fi
